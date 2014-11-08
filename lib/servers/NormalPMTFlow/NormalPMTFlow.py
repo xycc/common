@@ -100,6 +100,11 @@ class NormalPMTFlow( LabradServer):
     def connect_pulser(self):
         try:
             self.pulser = yield self.client.pulser
+            try:
+                self.client.servers['coach_k'].start('Pulser')
+            except:
+                print 'ERROR with ' + 'Pulser'
+
             self.collectTimeRange = yield self.pulser.get_collection_time()
             if self.recordingInterrupted:
                 yield self.dorecordData()
