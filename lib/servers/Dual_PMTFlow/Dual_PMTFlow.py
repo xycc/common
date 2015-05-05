@@ -18,7 +18,6 @@ message = 987654321
 timeout = 20
 ### END NODE INFO
 """
-
 from labrad.server import LabradServer, setting, Signal
 from labrad import types as T
 from twisted.internet.defer import Deferred, returnValue, inlineCallbacks
@@ -38,8 +37,7 @@ class Dual_PMTFlow(LabradServer):
     onNewSetting = Signal(SIGNALID+1, 'signal: new setting', '(ss)')
     onNewState = Signal(SIGNALID+2, 'signal: new state', '(ss)')
     # onNewState2 = Signal(SIGNALID+12, 'signal: new state 2', '(ss)')
-    
-    
+
     @inlineCallbacks
     def initServer(self):
         self.saveFolder = ['','PMT Counts']
@@ -59,16 +57,14 @@ class Dual_PMTFlow(LabradServer):
         yield self.connect_data_vault()
         yield self.connect_pulser()
         yield self.setupListeners()
-    
-    
+
     @inlineCallbacks
     def setupListeners(self):
         yield self.client.manager.subscribe_to_named_message('Server Connect', 9898989, True)
         yield self.client.manager.subscribe_to_named_message('Server Disconnect', 9898989+1, True)
         yield self.client.manager.addListener(listener = self.followServerConnect, source = None, ID = 9898989)
         yield self.client.manager.addListener(listener = self.followServerDisconnect, source = None, ID = 9898989+1)
-    
-    
+
     @inlineCallbacks
     def followServerConnect(self, cntx, serverName):
         serverName = serverName[1]
@@ -76,8 +72,7 @@ class Dual_PMTFlow(LabradServer):
             yield self.connect_pulser()
         elif serverName == 'Data Vault':
             yield self.connect_data_vault()
-    
-    
+
     @inlineCallbacks
     def followServerDisconnect(self, cntx, serverName):
         serverName = serverName[1]
@@ -85,8 +80,7 @@ class Dual_PMTFlow(LabradServer):
             yield self.disconnect_pulser()
         elif serverName == 'Data Vault':
             yield self.disconnect_data_vault()  
-       
-       
+
     @inlineCallbacks
     def connect_data_vault(self):
         try:
@@ -100,15 +94,13 @@ class Dual_PMTFlow(LabradServer):
         except AttributeError:
             self.dv = None
             print 'Not Connected: Data Vault'
-    
-    
+
     @inlineCallbacks
     def disconnect_data_vault(self):
         print 'Not Connected: Data Vault'
         self.dv = None
         yield None
-    
-    
+
     @inlineCallbacks
     def connect_pulser(self):
         try:
@@ -125,8 +117,7 @@ class Dual_PMTFlow(LabradServer):
         except AttributeError:
             self.pulser = None
             print 'Not Connected: Pulser'
-    
-    
+
     @inlineCallbacks
     def disconnect_pulser(self):
         print 'Not Connected: Pulser'
@@ -135,23 +126,19 @@ class Dual_PMTFlow(LabradServer):
             yield self.recording.stop()
             self.onNewState('off')
             self.recordingInterrupted = True
-            
-            
+
     def initContext(self, c):
         """Initialize a new context object."""
         self.listeners.add(c.ID)
 
-
     def expireContext(self, c):
         self.listeners.remove(c.ID)
-  
-  
+
     def getOtherListeners(self,c):
         notified = self.listeners.copy()
         notified.remove(c.ID)
         return notified  
-       
-       
+
     @inlineCallbacks
     def makeNewDataSet(self, folder, name):
         
@@ -163,22 +150,19 @@ class Dual_PMTFlow(LabradServer):
         yield self.addParameters(self.startTime)
         name = newSet[1][:-2]
         returnValue(name)
-    
-    
+
     @inlineCallbacks
     def addParameters(self, start):
         for pmt in self.pmt_list:
             yield self.dv.add_parameter("Window", ["PMT Counts"], context = pmt.context)
             yield self.dv.add_parameter('plotLive',True, context = pmt.context)
             yield self.dv.add_parameter('startTime',start, context = pmt.context)
-    
-    
+
     @setting(0, folder = '*s', returns = '')
     def set_save_folder(self, c, folder):
         yield self.dv.cd(folder, True)
         self.saveFolder = folder
-    
-    
+
     @setting(1, setName = 's', returns = 's')
     def start_new_dataset(self, c, setName = None):
         """Starts new dataset, if name not provided, it will be the same"""
@@ -187,12 +171,13 @@ class Dual_PMTFlow(LabradServer):
         otherListeners = self.getOtherListeners(c)
         self.onNewSetting(('dataset', self.openDataSet), otherListeners)
         returnValue(self.openDataSet)
-    
-    
+
     @setting(2, mode = 's', returns = '' )
     def set_mode(self,c, mode):
         """
         Start recording Time Resolved Counts into Data Vault
+        
+        valid modes: 'Normal', 'Differential'
         """
         if mode not in self.modes: raise Exception('Incorrect Mode')
         if not self.recording.running:
@@ -205,15 +190,13 @@ class Dual_PMTFlow(LabradServer):
         otherListeners = self.getOtherListeners(c)      
         self.onNewSetting(('mode', mode), otherListeners)
 
-
     @setting(3, returns = 's')
     def getcurrentmode(self, c):
         """
-        Returns the currently running mode
+        Returns the currently running mode, Normal or Differential
         """
         return self.currentMode
-    
-    
+
     @setting(4, returns = '')
     def record_data(self, c):
         """
@@ -225,8 +208,7 @@ class Dual_PMTFlow(LabradServer):
             setname = setname[1]
             self.onNewSetting(('dataset', setname), otherListeners)
         self.onNewState('on', otherListeners)
-    
-    
+
     @inlineCallbacks
     def dorecordData(self):
         """
@@ -244,8 +226,7 @@ class Dual_PMTFlow(LabradServer):
             self.openDataSet = yield self.makeNewDataSet(self.saveFolder, self.dataSetName)
         self.recording.start(self.collection_period['s']/2.0)
         returnValue(newSet)
-        
-        
+
     @setting(5, returns = '')
     def stopRecording(self,c):
         """
@@ -254,29 +235,27 @@ class Dual_PMTFlow(LabradServer):
         yield self.dostopRecording()
         otherListeners = self.getOtherListeners(c)
         self.onNewState('off', otherListeners)
-    
-    
+
     @inlineCallbacks
     def dostopRecording(self):
         yield self.recording.stop()
         if self.currentMode == 'Differential':
             yield self._stopPulserDiff()
-            
-            
+
     @setting(6, returns = 'b')
     def isRunning(self,c):
         """
-        Returns whether or not currently recording
+        Returns
+        -------
+        bool, whether or not currently recording
         """
         return self.recording.running
-        
-        
+
     @setting(7, returns = 's')
     def currentDataSet(self,c):
         if self.openDataSet is None: return ''
         return self.openDataSet
-    
-    
+
     @setting(8, timelength = 'v[s]')
     def set_time_length(self, c, timelength):
         """Sets the time length for the current mode"""
@@ -294,8 +273,7 @@ class Dual_PMTFlow(LabradServer):
             self.recording.start(timelength['s']/2.0)
         otherListeners = self.getOtherListeners(c)      
         self.onNewSetting(('timelength', str(timelength['s'])), otherListeners)
-    
-    
+
     @setting(9, kind = 's', number = 'w', average = 'b', returns = ['*v', 'v'])
     def get_next_counts(self, c, kind, number, average = False):
         """
@@ -320,15 +298,13 @@ class Dual_PMTFlow(LabradServer):
         if average:
             data = sum(data) / len(data)
         returnValue(data)
-    
-    
+
     @setting(10, returns = 'v')
     def get_time_length(self, c):
         """
         Returns the current timelength of in the current mode
         """
         return self.collection_period
-
 
     @setting(11, returns = '(vv)')
     def get_time_length_range(self, c):
@@ -346,7 +322,6 @@ class Dual_PMTFlow(LabradServer):
         """
         self.pmt_list[pmt_id - 1].enabled = state
 
-
     @setting(13, pmt = 'i', value = 'b', returns = '?')
     def pmt_state(self, c, pmt, value=None):
         """
@@ -361,8 +336,7 @@ class Dual_PMTFlow(LabradServer):
         else:
             out_val = yield self.pmt_list[pmt - 1].enabled
             returnValue(out_val)
-    
-    
+
     @inlineCallbacks
     def _programPulserDiff(self):
         yield self.pulser.new_sequence()
@@ -372,15 +346,13 @@ class Dual_PMTFlow(LabradServer):
         yield self.pulser.extend_sequence_length(2 * self.collection_period)
         yield self.pulser.program_sequence()
         yield self.pulser.start_infinite()
-    
-    
+
     @inlineCallbacks
     def _stopPulserDiff(self):
         yield self.pulser.complete_infinite_iteration()
         yield self.pulser.wait_sequence_done()
         yield self.pulser.stop_sequence()
-        
-        
+
     class readingRequest():
         
         def __init__(self, d, kind, count):
@@ -394,11 +366,10 @@ class Dual_PMTFlow(LabradServer):
             self.kind = kind
             self.data = []
         
-        
         def is_fulfilled(self):
             return len(self.data) == self.count
     
-    
+
     def processRequests(self, data):
         """
         This function is continually running after record_data is called.
@@ -417,8 +388,7 @@ class Dual_PMTFlow(LabradServer):
                 if req.is_fulfilled():
                     req.d.callback(req.data)
                     del(self.requestList[item])
-                    
-                    
+
     @inlineCallbacks
     def _record(self):
         """
@@ -447,24 +417,20 @@ class Dual_PMTFlow(LabradServer):
                         yield self.dv.add(toDataVault, context = pmt.context)
                     except:
                         print 'Not Able to Save To Data Vault'
-    
-    
-    
+
     @inlineCallbacks
     def getPMTCounts(self, pmt_id):
         if pmt_id == 2: 
             self.rawdata = yield self.pulser.get_secondary_pmt_counts()
         else: 
             self.rawdata = yield self.pulser.get_pmt_counts()
-    
-    
+
     def processSignals(self, data, pmt_id):
         lastPt = data[-1]
         NormalCount = lastPt[1]
         if pmt_id == 2: self.onNewCount2(NormalCount)
         else: self.onNewCount(NormalCount)
-    
-    
+
     def convertDifferential(self, rawdata):
         totalData = []
         for dataPoint in rawdata:
