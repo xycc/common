@@ -61,7 +61,6 @@ except ImportError, e:
 #     - since we won't bother optimizing the global search case, we can store
 #       tag information in the session
 
-
 # location of repository will get loaded from the registry
 DATADIR = None
 PRECISION = 15 # digits of precision to use when saving data
@@ -71,9 +70,7 @@ FILE_TIMEOUT = 60 # how long to keep datafiles open if not accessed
 DATA_TIMEOUT = 300 # how long to keep data in memory if not accessed
 TIME_FORMAT = '%Y-%m-%d, %H:%M:%S'
 
-
 ## error messages
-
 class NoDatasetError( T.Error ):
     """Please open a dataset first."""
     code = 2
@@ -118,7 +115,6 @@ class ParameterInUseError( T.Error ):
 
 
 ## filename translation
-
 encodings = [
     ( '%', '%p' ),
     ( '/', '%f' ),
@@ -145,18 +141,14 @@ def dsDecode( name ):
 def filedir( path ):
     return os.path.join( DATADIR, *[dsEncode( d ) + '.dir' for d in path[1:]] )
 
-
 ## time formatting
-
 def timeToStr( t ):
     return t.strftime( TIME_FORMAT )
 
 def timeFromStr( s ):
     return datetime.strptime( s, TIME_FORMAT )
 
-
 ## variable parsing
-
 re_label = re.compile( r'^([^\[(]*)' ) # matches up to the first [ or (
 re_legend = re.compile( r'\((.*)\)' ) # matches anything inside ( )
 re_units = re.compile( r'\[(.*)\]' ) # matches anything inside [ ]
@@ -181,7 +173,6 @@ def parseDependent( s ):
     return label, legend, units
 
 
-
 class Session( object ):
     """Stores information about a directory on disk.
     
@@ -190,7 +181,7 @@ class Session( object ):
     file, and manages the datasets in this directory.
     """
 
-    # keep a dictionary of all created session objects
+    # dictionary of all created session objects
     _sessions = {}
 
     @classmethod
@@ -433,6 +424,7 @@ class Session( object ):
         dataTags = [( d, sorted( self.dataset_tags.get( d, [] ) ) ) for d in datasets]
         return sessTags, dataTags
 
+
 class Dataset:
     def __init__( self, session, name, dtype = None, title = None, num = None, create = False ):
         self.parent = session.parent
@@ -517,45 +509,45 @@ class Dataset:
         S = SafeConfigParser()
 
         sec = 'General'
-        S.add_section( sec )
-        S.set( sec, 'DType', self.dtype )
-        S.set( sec, 'Created', timeToStr( self.created ) )
-        S.set( sec, 'Accessed', timeToStr( self.accessed ) )
-        S.set( sec, 'Modified', timeToStr( self.modified ) )
-        S.set( sec, 'Title', self.title )
-        S.set( sec, 'Independent', repr( len( self.independents ) ) )
-        S.set( sec, 'Dependent', repr( len( self.dependents ) ) )
-        S.set( sec, 'Parameters', repr( len( self.parameters ) ) )
-        S.set( sec, 'Comments', repr( len( self.comments ) ) )
+        S.add_section(sec)
+        S.set(sec, 'DType', self.dtype )
+        S.set(sec, 'Created', timeToStr(self.created))
+        S.set(sec, 'Accessed', timeToStr(self.accessed))
+        S.set(sec, 'Modified', timeToStr(self.modified))
+        S.set(sec, 'Title', self.title)
+        S.set(sec, 'Independent', repr(len(self.independents)))
+        S.set(sec, 'Dependent', repr(len(self.dependents)))
+        S.set(sec, 'Parameters', repr(len(self.parameters)))
+        S.set(sec, 'Comments', repr(len(self.comments)))
 
-        for i, ind in enumerate( self.independents ):
-            sec = 'Independent %d' % ( i + 1 )
-            S.add_section( sec )
-            S.set( sec, 'Label', ind['label'] )
-            S.set( sec, 'Units', ind['units'] )
+        for i, ind in enumerate(self.independents):
+            sec = 'Independent %d' % (i + 1)
+            S.add_section(sec)
+            S.set(sec, 'Label', ind['label'])
+            S.set(sec, 'Units', ind['units'])
 
-        for i, dep in enumerate( self.dependents ):
-            sec = 'Dependent %d' % ( i + 1 )
-            S.add_section( sec )
-            S.set( sec, 'Label', dep['label'] )
-            S.set( sec, 'Units', dep['units'] )
-            S.set( sec, 'Category', dep['category'] )
+        for i, dep in enumerate(self.dependents):
+            sec = 'Dependent %d' % (i + 1)
+            S.add_section(sec)
+            S.set(sec, 'Label', dep['label'])
+            S.set(sec, 'Units', dep['units'])
+            S.set(sec, 'Category', dep['category'])
 
-        for i, par in enumerate( self.parameters ):
-            sec = 'Parameter %d' % ( i + 1 )
-            S.add_section( sec )
-            S.set( sec, 'Label', par['label'] )
+        for i, par in enumerate(self.parameters):
+            sec = 'Parameter %d' % (i + 1)
+            S.add_section(sec)
+            S.set(sec, 'Label', par['label'])
             # TODO: smarter saving here, since eval'ing is insecure
-            S.set( sec, 'Data', repr( par['data'] ) )
+            S.set(sec, 'Data', repr( par['data']))
 
         sec = 'Comments'
-        S.add_section( sec )
-        for i, ( time, user, comment ) in enumerate( self.comments ):
+        S.add_section(sec)
+        for i, (time, user, comment) in enumerate(self.comments):
             time = timeToStr( time )
-            S.set( sec, 'c%d' % i, repr( ( time, user, comment ) ) )
+            S.set(sec, 'c%d' % i, repr((time, user, comment)))
 
-        with open( self.infofile, 'w' ) as f:
-            S.write( f )
+        with open(self.infofile, 'w') as f:
+            S.write(f)
 
     def access( self ):
         """Update time of last access for this dataset."""
