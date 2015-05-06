@@ -39,7 +39,7 @@ from labrad.server import LabradServer, Signal, setting
 
 from twisted.internet import reactor
 from twisted.internet.reactor import callLater
-from twisted.internet.defer import inlineCallbacks, Deferred, returnValue, DeferredList
+from twisted.internet.defer import inlineCallbacks, Deferred, returnValue
 
 from ConfigParser import SafeConfigParser
 import os, re, sys
