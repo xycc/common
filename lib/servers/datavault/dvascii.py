@@ -736,9 +736,9 @@ class Dataset:
             self.comment_listeners.add( context )
 
 
-class NumpyDataset( Dataset ):
+class NumpyDataset(Dataset):
 
-    def _get_data( self ):
+    def _get_data(self):
         """Read data from file on demand.
         
         The data is scheduled to be cleared from memory unless accessed."""
@@ -848,7 +848,7 @@ if useNumpy:
     Dataset = NumpyDataset
 
 
-class DataVault( LabradServer ):
+class DataVault(LabradServer):
     name = 'Data Vault'
 
     @inlineCallbacks
@@ -934,17 +934,17 @@ class DataVault( LabradServer ):
         return session.datasets[c['dataset']]
 
     # session signals
-    onNewDir = Signal( 543617, 'signal: new dir', 's' )
-    onNewDirectory = Signal( 543624, 'signal: new directory', 's' ) ####MK
-    onNewDataset = Signal( 543618, 'signal: new dataset', 's' )
+    onNewDir = Signal(543617, 'signal: new dir', 's')
+    onNewDirectory = Signal(543624, 'signal: new directory', 's') ####MK
+    onNewDataset = Signal(543618, 'signal: new dataset', 's')
     onNewDatasetDir = Signal(543623, 'signal: new dataset dir', '(s,?)') ####MR
-    onTagsUpdated = Signal( 543622, 'signal: tags updated', '*(s*s)*(s*s)' )
+    onTagsUpdated = Signal(543622, 'signal: tags updated', '*(s*s)*(s*s)')
 
     # dataset signals
-    onDataAvailable = Signal( 543619, 'signal: data available', '' )
-    onNewParameterDataset = Signal( 543620, 'signal: new parameter dataset', '(i, s, ?, s)' ) ####MK
-    onNewParameter = Signal( 543625, 'signal: new parameter', '' )
-    onCommentsAvailable = Signal( 543621, 'signal: comments available', '' )
+    onDataAvailable = Signal(543619, 'signal: data available', '')
+    onNewParameterDataset = Signal(543620, 'signal: new parameter dataset', '(i, s, ?, s)') ####MK
+    onNewParameter = Signal(543625, 'signal: new parameter', '')
+    onCommentsAvailable = Signal(543621, 'signal: comments available', '')
 
     @setting( 6, tagFilters = ['s', '*s'], includeTags = 'b',
                 returns = ['*s{subdirs}, *s{datasets}',
